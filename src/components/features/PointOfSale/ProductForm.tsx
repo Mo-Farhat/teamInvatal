@@ -1,73 +1,118 @@
 import React, { useState } from 'react';
-import { Product } from './types';
-import Papa from 'papaparse';
+import { Input } from "../../ui/input";
+import { Button } from "../../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import ImageUpload from './ImageUpload';
+import { ProductWithFile } from '../Inventory/types';
 
 interface ProductFormProps {
-  onAddProduct: (product: Product) => void;
+  onSubmit: (product: ProductWithFile) => Promise<void>;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ onAddProduct }) => {
-  const [product, setProduct] = useState<Partial<Product>>({});
-  const [csvFile, setCsvFile] = useState<File | null>(null);
+const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
+  const [product, setProduct] = useState<ProductWithFile>({
+    name: '',
+    quantity: 0,
+    price: 0,
+    minSellingPrice: 0,
+    stock: 0,
+    lowStockThreshold: 0,
+    imageUrl: '',
+    imageFile: undefined,
+    barcode: '',
+    manufacturer: '',
+    productId: ''  // Added new productId field
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProduct({ ...product, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (product.name && product.price && product.stock) {
-      onAddProduct({ id: Date.now().toString(), ...product } as Product);
-      setProduct({});
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setCsvFile(e.target.files[0]);
-    }
-  };
-
-  const handleCSVImport = () => {
-    if (!csvFile) return;
-    Papa.parse(csvFile, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (result) => {
-        result.data.forEach((row: any) => {
-          const newProduct: Product = {
-            id: Date.now().toString(),
-            name: row.name || '',
-            stock: Number(row.stock) || 0,
-            price: Number(row.price) || 0,
-            minSellingPrice: Number(row.minSellingPrice) || 0,
-            productId: row.productId || '',
-            barcode: row.barcode || '',
-            manufacturer: row.manufacturer || '',
-            imageUrl: row.imageUrl || '',
-            lowStockThreshold: Number(row.lowStockThreshold) || 5,
-          };
-          onAddProduct(newProduct);
-        });
-      },
+    await onSubmit(product);
+    setProduct({
+      name: '',
+      quantity: 0,
+      price: 0,
+      minSellingPrice: 0,
+      stock: 0,
+      lowStockThreshold: 0,
+      imageUrl: '',
+      imageFile: undefined,
+      barcode: '',
+      manufacturer: '',
+      productId: ''  // Reset productId field
     });
   };
 
   return (
-    <div className="p-4 bg-white shadow rounded-md">
-      <h2 className="text-lg font-bold mb-4">Add Product</h2>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input type="text" name="name" placeholder="Product Name" onChange={handleChange} className="w-full p-2 border" />
-        <input type="number" name="stock" placeholder="Stock" onChange={handleChange} className="w-full p-2 border" />
-        <input type="number" name="price" placeholder="Price" onChange={handleChange} className="w-full p-2 border" />
-        <button type="submit" className="px-4 py-2 bg-blue-500 text-white">Add Product</button>
-      </form>
-      <div className="mt-4">
-        <h3 className="font-semibold mb-2">Import from CSV</h3>
-        <input type="file" accept=".csv" onChange={handleFileUpload} className="mb-2" />
-        <button onClick={handleCSVImport} className="px-4 py-2 bg-green-500 text-white">Import CSV</button>
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Add New Product</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              placeholder="Product Name"
+              value={product.name}
+              onChange={(e) => setProduct({ ...product, name: e.target.value })}
+              required
+            />
+            <Input
+              type="number"
+              placeholder="Price"
+              value={product.price || ''}
+              onChange={(e) => setProduct({ ...product, price: parseFloat(e.target.value) })}
+              required
+              min="0"
+              step="0.01"
+            />
+            <Input
+              type="number"
+              placeholder="Minimum Selling Price"
+              value={product.minSellingPrice || ''}
+              onChange={(e) => setProduct({ ...product, minSellingPrice: parseFloat(e.target.value) })}
+              required
+              min="0"
+              step="0.01"
+            />
+            <Input
+              type="number"
+              placeholder="Initial Stock"
+              value={product.stock || ''}
+              onChange={(e) => setProduct({ ...product, stock: parseInt(e.target.value) })}
+              required
+              min="0"
+            />
+            <Input
+              type="number"
+              placeholder="Low Stock Threshold"
+              value={product.lowStockThreshold || ''}
+              onChange={(e) => setProduct({ ...product, lowStockThreshold: parseInt(e.target.value) })}
+              required
+              min="0"
+            />
+            <Input
+              placeholder="Product ID/IMEI Number"
+              value={typeof product.productId === 'string' ? product.productId : String(product.productId)}
+              onChange={(e) => setProduct({ ...product, productId: e.target.value })}
+            />
+            <Input
+              placeholder="Barcode"
+              value={product.barcode}
+              onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
+            />
+            <Input
+              placeholder="Manufacturer"
+              value={product.manufacturer}
+              onChange={(e) => setProduct({ ...product, manufacturer: e.target.value })}
+            />
+          </div>
+          <div className="mt-4">
+            <ImageUpload onImageUploaded={(url) => setProduct({ ...product, imageUrl: url })} />
+          </div>
+          <Button type="submit" className="w-full">Add Product</Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
