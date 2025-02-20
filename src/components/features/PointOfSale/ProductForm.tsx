@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import Papa from "papaparse"; // Import PapaParse
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import ImageUpload from "./ImageUpload";
 import { ProductWithFile } from "../Inventory/types";
+import Papa from "papaparse"; // CSV parser
 
 interface ProductFormProps {
   onSubmit: (product: ProductWithFile) => Promise<void>;
@@ -25,35 +25,35 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
     productId: "",
   });
 
-  // Function to handle CSV file import
+  // 📌 Handle CSV Upload and Populate Form
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const data = results.data as any[];
+      complete: (result) => {
+        const data = result.data as string[][]; // Assuming it's an array of arrays
+        if (data.length < 2) return; // Skip if empty
 
-        if (data.length > 0) {
-          const firstProduct = data[0]; // Import only the first row for now
+        const [, row] = data; // Ignore headers, take first row
 
-          setProduct({
-            name: firstProduct.name || "",
-            quantity: Number(firstProduct.quantity) || 0,
-            price: Number(firstProduct.price) || 0,
-            minSellingPrice: Number(firstProduct.minSellingPrice) || 0,
-            stock: Number(firstProduct.stock) || 0,
-            lowStockThreshold: Number(firstProduct.lowStockThreshold) || 0,
-            imageUrl: firstProduct.imageUrl || "",
-            imageFile: undefined, // Can't be imported from CSV
-            barcode: firstProduct.barcode || "",
-            manufacturer: firstProduct.manufacturer || "",
-            productId: firstProduct.productId || "",
-          });
-        }
+        // Auto-fill form fields based on CSV structure
+        setProduct({
+          name: row[0] || "",
+          quantity: parseInt(row[1]) || 0,
+          price: parseFloat(row[2]) || 0,
+          minSellingPrice: parseFloat(row[3]) || 0,
+          stock: parseInt(row[4]) || 0,
+          lowStockThreshold: parseInt(row[5]) || 0,
+          imageUrl: row[6] || "",
+          barcode: row[7] || "",
+          manufacturer: row[8] || "",
+          productId: row[9] || "",
+          imageFile: undefined,
+        });
       },
+      header: false,
+      skipEmptyLines: true,
     });
   };
 
@@ -83,100 +83,26 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* CSV Upload Button */}
-          <div>
-            <input type="file" accept=".csv" onChange={handleCSVImport} /><input 
-  type="file" 
-  accept=".csv" 
-  onChange={handleCSVImport} 
-  className="border p-2 cursor-pointer"
-/>
-          </div>
+          <label className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer">
+            Import CSV
+            <input type="file" accept=".csv" onChange={handleCSVImport} className="hidden" />
+          </label>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              placeholder="Product Name"
-              value={product.name}
-              onChange={(e) => setProduct({ ...product, name: e.target.value })}
-              required
-            />
-            <Input
-              type="number"
-              placeholder="Price"
-              value={product.price || ""}
-              onChange={(e) =>
-                setProduct({ ...product, price: parseFloat(e.target.value) })
-              }
-              required
-              min="0"
-              step="0.01"
-            />
-            <Input
-              type="number"
-              placeholder="Minimum Selling Price"
-              value={product.minSellingPrice || ""}
-              onChange={(e) =>
-                setProduct({
-                  ...product,
-                  minSellingPrice: parseFloat(e.target.value),
-                })
-              }
-              required
-              min="0"
-              step="0.01"
-            />
-            <Input
-              type="number"
-              placeholder="Initial Stock"
-              value={product.stock || ""}
-              onChange={(e) =>
-                setProduct({ ...product, stock: parseInt(e.target.value) })
-              }
-              required
-              min="0"
-            />
-            <Input
-              type="number"
-              placeholder="Low Stock Threshold"
-              value={product.lowStockThreshold || ""}
-              onChange={(e) =>
-                setProduct({
-                  ...product,
-                  lowStockThreshold: parseInt(e.target.value),
-                })
-              }
-              required
-              min="0"
-            />
-            <Input
-              placeholder="Product ID/IMEI Number"
-              value={product.productId}
-              onChange={(e) =>
-                setProduct({ ...product, productId: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Barcode"
-              value={product.barcode}
-              onChange={(e) =>
-                setProduct({ ...product, barcode: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Manufacturer"
-              value={product.manufacturer}
-              onChange={(e) =>
-                setProduct({ ...product, manufacturer: e.target.value })
-              }
-            />
+            <Input placeholder="Product Name" value={product.name} onChange={(e) => setProduct({ ...product, name: e.target.value })} required />
+            <Input type="number" placeholder="Price" value={product.price || ""} onChange={(e) => setProduct({ ...product, price: parseFloat(e.target.value) })} required min="0" step="0.01" />
+            <Input type="number" placeholder="Minimum Selling Price" value={product.minSellingPrice || ""} onChange={(e) => setProduct({ ...product, minSellingPrice: parseFloat(e.target.value) })} required min="0" step="0.01" />
+            <Input type="number" placeholder="Initial Stock" value={product.stock || ""} onChange={(e) => setProduct({ ...product, stock: parseInt(e.target.value) })} required min="0" />
+            <Input type="number" placeholder="Low Stock Threshold" value={product.lowStockThreshold || ""} onChange={(e) => setProduct({ ...product, lowStockThreshold: parseInt(e.target.value) })} required min="0" />
+            <Input placeholder="Product ID/IMEI Number" value={product.productId} onChange={(e) => setProduct({ ...product, productId: e.target.value })} />
+            <Input placeholder="Barcode" value={product.barcode} onChange={(e) => setProduct({ ...product, barcode: e.target.value })} />
+            <Input placeholder="Manufacturer" value={product.manufacturer} onChange={(e) => setProduct({ ...product, manufacturer: e.target.value })} />
           </div>
+
           <div className="mt-4">
-            <ImageUpload
-              onImageUploaded={(url) => setProduct({ ...product, imageUrl: url })}
-            />
+            <ImageUpload onImageUploaded={(url) => setProduct({ ...product, imageUrl: url })} />
           </div>
-          <Button type="submit" className="w-full">
-            Add Product
-          </Button>
+          <Button type="submit" className="w-full">Add Product</Button>
         </form>
       </CardContent>
     </Card>
