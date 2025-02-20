@@ -2,7 +2,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  quantity: number; // Consider consolidating with stock
+  quantity?: number; // Consider consolidating with stock
   stock: number;
   minSellingPrice: number; // Added from ProductForm
   lowStockThreshold: number;
