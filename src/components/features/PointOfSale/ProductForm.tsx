@@ -2,83 +2,68 @@ import React, { useState } from "react";
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import ImageUpload from "./ImageUpload";
-import { ProductWithFile } from "../Inventory/types";
 import Papa from "papaparse"; // CSV parser
 
+interface Product {
+  name: string;
+  quantity: number;
+  price: number;
+  minSellingPrice: number;
+  stock: number;
+  lowStockThreshold: number;
+  barcode: string;
+  manufacturer: string;
+  productId: string;
+}
+
 interface ProductFormProps {
-  onSubmit: (product: ProductWithFile) => Promise<void>;
+  onSubmit: (products: Product[]) => Promise<void>;
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
-  const [product, setProduct] = useState<ProductWithFile>({
-    name: "",
-    quantity: 0,
-    price: 0,
-    minSellingPrice: 0,
-    stock: 0,
-    lowStockThreshold: 0,
-    imageUrl: "",
-    imageFile: undefined,
-    barcode: "",
-    manufacturer: "",
-    productId: "",
-  });
+  const [products, setProducts] = useState<Product[]>([]);
 
-  // 📌 Handle CSV Upload and Populate Form
+  // 📌 Handle CSV Import (Multiple Rows)
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     Papa.parse(file, {
       complete: (result) => {
-        const data = result.data as string[][]; // Assuming it's an array of arrays
-        if (data.length < 2) return; // Skip if empty
+        const data = result.data as string[][]; // CSV as an array of arrays
+        if (data.length < 2) return; // Ensure there’s data
 
-        const [, row] = data; // Ignore headers, take first row
-
-        // Auto-fill form fields based on CSV structure
-        setProduct({
+        const importedProducts = data.slice(1).map((row) => ({
           name: row[0] || "",
           quantity: parseInt(row[1]) || 0,
           price: parseFloat(row[2]) || 0,
           minSellingPrice: parseFloat(row[3]) || 0,
           stock: parseInt(row[4]) || 0,
           lowStockThreshold: parseInt(row[5]) || 0,
-          imageUrl: row[6] || "",
-          barcode: row[7] || "",
-          manufacturer: row[8] || "",
-          productId: row[9] || "",
-          imageFile: undefined,
-        });
+          barcode: row[6] || "",
+          manufacturer: row[7] || "",
+          productId: row[8] || "",
+        }));
+
+        setProducts(importedProducts);
       },
       header: false,
       skipEmptyLines: true,
     });
   };
 
+  // 📌 Handle Form Submission (Submit All Products)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(product);
-    setProduct({
-      name: "",
-      quantity: 0,
-      price: 0,
-      minSellingPrice: 0,
-      stock: 0,
-      lowStockThreshold: 0,
-      imageUrl: "",
-      imageFile: undefined,
-      barcode: "",
-      manufacturer: "",
-      productId: "",
-    });
+    if (products.length === 0) return;
+    await onSubmit(products);
+    setProducts([]); // Clear table after submission
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add New Product</CardTitle>
+        <CardTitle>Import Products via CSV</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -88,21 +73,46 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
             <input type="file" accept=".csv" onChange={handleCSVImport} className="hidden" />
           </label>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input placeholder="Product Name" value={product.name} onChange={(e) => setProduct({ ...product, name: e.target.value })} required />
-            <Input type="number" placeholder="Price" value={product.price || ""} onChange={(e) => setProduct({ ...product, price: parseFloat(e.target.value) })} required min="0" step="0.01" />
-            <Input type="number" placeholder="Minimum Selling Price" value={product.minSellingPrice || ""} onChange={(e) => setProduct({ ...product, minSellingPrice: parseFloat(e.target.value) })} required min="0" step="0.01" />
-            <Input type="number" placeholder="Initial Stock" value={product.stock || ""} onChange={(e) => setProduct({ ...product, stock: parseInt(e.target.value) })} required min="0" />
-            <Input type="number" placeholder="Low Stock Threshold" value={product.lowStockThreshold || ""} onChange={(e) => setProduct({ ...product, lowStockThreshold: parseInt(e.target.value) })} required min="0" />
-            <Input placeholder="Product ID/IMEI Number" value={product.productId} onChange={(e) => setProduct({ ...product, productId: e.target.value })} />
-            <Input placeholder="Barcode" value={product.barcode} onChange={(e) => setProduct({ ...product, barcode: e.target.value })} />
-            <Input placeholder="Manufacturer" value={product.manufacturer} onChange={(e) => setProduct({ ...product, manufacturer: e.target.value })} />
-          </div>
+          {/* Show Imported Data in Table */}
+          {products.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-gray-300 mt-4">
+                <thead>
+                  <tr className="bg-gray-100 border-b">
+                    <th className="px-4 py-2">Name</th>
+                    <th className="px-4 py-2">Quantity</th>
+                    <th className="px-4 py-2">Price</th>
+                    <th className="px-4 py-2">Min Selling Price</th>
+                    <th className="px-4 py-2">Stock</th>
+                    <th className="px-4 py-2">Low Stock</th>
+                    <th className="px-4 py-2">Barcode</th>
+                    <th className="px-4 py-2">Manufacturer</th>
+                    <th className="px-4 py-2">Product ID</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((product, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="px-4 py-2">{product.name}</td>
+                      <td className="px-4 py-2">{product.quantity}</td>
+                      <td className="px-4 py-2">{product.price}</td>
+                      <td className="px-4 py-2">{product.minSellingPrice}</td>
+                      <td className="px-4 py-2">{product.stock}</td>
+                      <td className="px-4 py-2">{product.lowStockThreshold}</td>
+                      <td className="px-4 py-2">{product.barcode}</td>
+                      <td className="px-4 py-2">{product.manufacturer}</td>
+                      <td className="px-4 py-2">{product.productId}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-          <div className="mt-4">
-            <ImageUpload onImageUploaded={(url) => setProduct({ ...product, imageUrl: url })} />
-          </div>
-          <Button type="submit" className="w-full">Add Product</Button>
+          {/* Submit Button (Only if Products are Loaded) */}
+          {products.length > 0 && (
+            <Button type="submit" className="w-full mt-4">Add Products</Button>
+          )}
         </form>
       </CardContent>
     </Card>
