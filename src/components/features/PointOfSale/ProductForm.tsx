@@ -84,7 +84,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* CSV Upload Button */}
           <div>
-            <input type="file" accept=".csv" onChange={handleCSVImport} />
+            <input type="file" accept=".csv" onChange={handleCSVImport} /><input 
+  type="file" 
+  accept=".csv" 
+  onChange={handleCSVImport} 
+  className="border p-2 cursor-pointer"
+/>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
