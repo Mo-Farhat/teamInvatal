@@ -20,7 +20,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
     imageUrl: '',
     imageFile: undefined,
     barcode: '',
-    manufacturer: ''
+    manufacturer: '',
+    productId: ''  // Added new productId field
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +37,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
       imageUrl: '',
       imageFile: undefined,
       barcode: '',
-      manufacturer: ''
+      manufacturer: '',
+      productId: ''  // Reset productId field
     });
   };
 
@@ -87,6 +89,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
               onChange={(e) => setProduct({ ...product, lowStockThreshold: parseInt(e.target.value) })}
               required
               min="0"
+            />
+            <Input
+              placeholder="Product ID/IMEI Number"
+              value={typeof product.productId === 'string' ? product.productId : String(product.productId)}
+              onChange={(e) => setProduct({ ...product, productId: e.target.value })}
             />
             <Input
               placeholder="Barcode"

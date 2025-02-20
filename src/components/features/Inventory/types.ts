@@ -13,6 +13,7 @@ export interface Product {
   updatedAt?: Date;
 }
 
-export interface ProductWithFile extends Omit<Product, 'id'> {
+export interface ProductWithFile extends Omit<Product, "id"> {
   imageFile?: File;
+  productId: String;
 }
