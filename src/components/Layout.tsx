@@ -50,18 +50,6 @@ const navItems: NavItem[] = [
     roles: ['admin'] 
   },
   { 
-    to: "/timesheets", 
-    icon: <Clock />, 
-    text: "Timesheets",
-    roles: ['admin'] 
-  },
-  { 
-    to: "/planning", 
-    icon: <Trello />, 
-    text: "Planning",
-    roles: ['admin'] 
-  },
-  { 
     to: "/purchase", 
     icon: <ShoppingBag />, 
     text: "Purchase",
