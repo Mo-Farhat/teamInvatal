@@ -2,13 +2,22 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  quantity: number;
+  quantity: number; // Consider consolidating with stock
   stock: number;
+  minSellingPrice: number; // Added from ProductForm
   lowStockThreshold: number;
   description?: string;
   imageUrl?: string;
   category?: string;
   discount?: number;
+  barcode?: string; // Added from ProductForm
+  manufacturer?: string; // Added from ProductForm
+  productId?: string; // Added from ProductForm (lowercase string type)
+}
+
+export interface ProductWithFile extends Omit<Product, "id"> {
+  imageFile?: File;
+  productId: string; // Changed from String to string
 }
 
 export interface CartItem extends Product {
@@ -21,7 +30,7 @@ export interface Customer {
   name: string;
   email: string;
   phone: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   hirePurchaseCustomer: boolean;
   loyaltyPoints: number;
   company?: string;
@@ -42,11 +51,10 @@ export interface HirePurchaseAgreement {
   startDate?: Date;
   endDate?: Date;
   payments?: HirePurchasePayment[];
-  status?: 'active' | 'completed' | 'defaulted';
+  status?: "active" | "completed" | "defaulted";
   createdAt?: Date;
   updatedAt?: Date;
 }
-
 
 export interface SalesContextType {
   products: Product[];
@@ -66,7 +74,9 @@ export interface SalesContextType {
   setSelectedCustomer: React.Dispatch<React.SetStateAction<Customer | null>>;
   hirePurchaseItems: CartItem[];
   setHirePurchaseItemsFromCart: () => void;
-  createHirePurchaseAgreement: (formData: HirePurchaseAgreement) => Promise<string>;
+  createHirePurchaseAgreement: (
+    formData: HirePurchaseAgreement
+  ) => Promise<string>;
   addToCart: (product: Product) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
@@ -77,11 +87,10 @@ export interface SalesContextType {
   handleCheckout: () => Promise<void>;
 }
 
-
 export interface ReturnItem {
   productId: string;
   quantity: number;
-  condition: 'good' | 'damaged';
+  condition: "good" | "damaged";
 }
 
 export interface ReturnRequest {
@@ -90,7 +99,7 @@ export interface ReturnRequest {
   customerName: string;
   customerId: string;
   reason: string;
-  status: 'pending' | 'approved' | 'rejected' | 'processed';
+  status: "pending" | "approved" | "rejected" | "processed";
   amount: number;
   items: ReturnItem[];
   requestDate: Date;
@@ -112,5 +121,5 @@ export interface HirePurchasePayment {
   amount: number;
   dueDate: Date;
   paidDate?: Date;
-  status: 'pending' | 'paid' | 'overdue';
+  status: "pending" | "paid" | "overdue";
 }

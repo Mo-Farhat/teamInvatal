@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2, AlertTriangle } from 'lucide-react';
+import { Edit, Trash2, AlertTriangle, Barcode } from 'lucide-react';
 import { Product } from './types';
 
 interface ProductListViewProps {
@@ -15,9 +15,12 @@ const ProductListView: React.FC<ProductListViewProps> = ({ products, onUpdate, o
         <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
           <th className="py-3 px-6 text-left">Image</th>
           <th className="py-3 px-6 text-left">Name</th>
-          <th className="py-3 px-6 text-right">Quantity</th>
+          <th className="py-3 px-6 text-right">Stock</th>
           <th className="py-3 px-6 text-right">Price</th>
           <th className="py-3 px-6 text-right">Min. Price</th>
+          <th className="py-3 px-6 text-left">Product ID</th>
+          <th className="py-3 px-6 text-left">Barcode</th>
+          <th className="py-3 px-6 text-left">Manufacturer</th>
           <th className="py-3 px-6 text-center">Actions</th>
         </tr>
       </thead>
@@ -34,14 +37,24 @@ const ProductListView: React.FC<ProductListViewProps> = ({ products, onUpdate, o
               )}
             </td>
             <td className="py-3 px-6 text-left whitespace-nowrap">
-              {product.quantity <= product.lowStockThreshold && (
+              {product.stock <= product.lowStockThreshold && (
                 <AlertTriangle size={18} className="inline text-yellow-500 mr-2" />
               )}
               {product.name}
             </td>
-            <td className="py-3 px-6 text-right">{product.quantity}</td>
+            <td className="py-3 px-6 text-right">{product.stock}</td>
             <td className="py-3 px-6 text-right">${product.price.toFixed(2)}</td>
             <td className="py-3 px-6 text-right text-red-600">${product.minSellingPrice.toFixed(2)}</td>
+            <td className="py-3 px-6 text-left">{product.productId || "-"}</td>
+            <td className="py-3 px-6 text-left">
+              {product.barcode ? (
+                <span title={product.barcode}>
+                  <Barcode size={16} className="inline mr-1" />
+                  {product.barcode.substring(0, 8)}...
+                </span>
+              ) : "-"}
+            </td>
+            <td className="py-3 px-6 text-left">{product.manufacturer || "-"}</td>
             <td className="py-3 px-6 text-center">
               <button
                 onClick={() => onUpdate(product.id, {})}
