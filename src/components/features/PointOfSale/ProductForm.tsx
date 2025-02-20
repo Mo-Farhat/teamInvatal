@@ -22,6 +22,13 @@ interface ProductFormProps {
 
 const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  // 📌 Validate CSV File Format
+  const validateCSV = (data: string[][]) => {
+    const expectedColumns = 9; // Expected number of columns
+    return data.every((row) => row.length === expectedColumns);
+  };
 
   // 📌 Handle CSV Import (Multiple Rows)
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,8 +38,20 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
     Papa.parse(file, {
       complete: (result) => {
         const data = result.data as string[][]; // CSV as an array of arrays
-        if (data.length < 2) return; // Ensure there’s data
+        if (data.length < 2) {
+          setError("CSV file is empty or improperly formatted.");
+          return;
+        }
 
+        // Validate format
+        if (!validateCSV(data.slice(1))) {
+          setError("Invalid CSV format. Please ensure all columns are present.");
+          return;
+        }
+
+        setError(null); // Clear previous errors
+
+        // Convert CSV rows to product objects
         const importedProducts = data.slice(1).map((row) => ({
           name: row[0] || "",
           quantity: parseInt(row[1]) || 0,
@@ -52,10 +71,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
     });
   };
 
+  // 📌 Handle Input Changes in the Table
+  const handleInputChange = (index: number, field: keyof Product, value: string) => {
+    const updatedProducts = [...products];
+    updatedProducts[index] = { ...updatedProducts[index], [field]: value };
+    setProducts(updatedProducts);
+  };
+
   // 📌 Handle Form Submission (Submit All Products)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (products.length === 0) return;
+
     await onSubmit(products);
     setProducts([]); // Clear table after submission
   };
@@ -73,35 +100,32 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit }) => {
             <input type="file" accept=".csv" onChange={handleCSVImport} className="hidden" />
           </label>
 
-          {/* Show Imported Data in Table */}
+          {/* Error Message */}
+          {error && <p className="text-red-500 mt-2">{error}</p>}
+
+          {/* Show Imported Data in Editable Table */}
           {products.length > 0 && (
             <div className="overflow-x-auto">
               <table className="min-w-full border border-gray-300 mt-4">
                 <thead>
                   <tr className="bg-gray-100 border-b">
-                    <th className="px-4 py-2">Name</th>
-                    <th className="px-4 py-2">Quantity</th>
-                    <th className="px-4 py-2">Price</th>
-                    <th className="px-4 py-2">Min Selling Price</th>
-                    <th className="px-4 py-2">Stock</th>
-                    <th className="px-4 py-2">Low Stock</th>
-                    <th className="px-4 py-2">Barcode</th>
-                    <th className="px-4 py-2">Manufacturer</th>
-                    <th className="px-4 py-2">Product ID</th>
+                    {["Name", "Quantity", "Price", "Min Selling Price", "Stock", "Low Stock", "Barcode", "Manufacturer", "Product ID"].map((header) => (
+                      <th key={header} className="px-4 py-2">{header}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {products.map((product, index) => (
                     <tr key={index} className="border-b">
-                      <td className="px-4 py-2">{product.name}</td>
-                      <td className="px-4 py-2">{product.quantity}</td>
-                      <td className="px-4 py-2">{product.price}</td>
-                      <td className="px-4 py-2">{product.minSellingPrice}</td>
-                      <td className="px-4 py-2">{product.stock}</td>
-                      <td className="px-4 py-2">{product.lowStockThreshold}</td>
-                      <td className="px-4 py-2">{product.barcode}</td>
-                      <td className="px-4 py-2">{product.manufacturer}</td>
-                      <td className="px-4 py-2">{product.productId}</td>
+                      {Object.keys(product).map((field) => (
+                        <td key={field} className="px-4 py-2">
+                          <Input
+                            type={field.includes("price") ? "number" : "text"}
+                            value={String(product[field as keyof Product])}
+                            onChange={(e) => handleInputChange(index, field as keyof Product, e.target.value)}
+                          />
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
